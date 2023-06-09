@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/LinkedArrays/LinkedArrays.iml" filepath="$PROJECT_DIR$/LinkedArrays/LinkedArrays.iml" />
+      <module fileurl="file://$PROJECT_DIR$/NewDataStructureIdea.iml" filepath="$PROJECT_DIR$/NewDataStructureIdea.iml" />
+    </modules>
+  </component>
+</project>
