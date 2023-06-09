@@ -6,21 +6,38 @@ import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 
 public class LinkedArray<E> implements List<E> {
+
+    private class ArrayLink<E> {
+        private transient Object[] data;
+        private ArrayLink<E> next;
+        private ArrayLink<E> prev;
+
+        public ArrayLink() {
+            this(10);
+        }
+
+        public ArrayLink(int module_size) {
+            data = new Object[module_size];
+            next = prev = null;
+        }
+    }
     private int module_size;
     private int num_modules;
     private int modulo;
-    private transient Object[] data;
-    private LinkedArray<E> nextArray;
-    private LinkedArray<E> lastArray;
+
+    private ArrayLink<E> front;
+    private ArrayLink<E> tail;
 
 
     public LinkedArray(int mSize) {
         this.module_size = mSize;
         this.modulo = 0;
         this.num_modules = 0;
-        this.data = new Object[mSize];
-        this.nextArray = null;
-        this.lastArray = null;
+        front = tail = new ArrayLink<E>(mSize);
+    }
+
+    public LinkedArray() {
+        this(10);
     }
 
     @Override
@@ -40,7 +57,7 @@ public class LinkedArray<E> implements List<E> {
         Iterator<E> itr = this.iterator();
         while (itr.hasNext()) {
             E comp = itr.next();
-            if (comp == obj) return true;
+            if (comp.equals(obj)) return true;
         }
         return false;
     }
@@ -49,17 +66,19 @@ public class LinkedArray<E> implements List<E> {
     public Iterator<E> iterator() {
         return new LinkedArrayIterator<E>(this);
     }
-    @SuppressWarnings("unchecked")
-    static class LinkedArrayIterator<E> implements Iterator<E> {
 
-        private LinkedArray<E> currModule;
+    @SuppressWarnings("unchecked")
+    class LinkedArrayIterator<E> implements Iterator<E> {
+
+        private LinkedArray<E>.ArrayLink<E> currModule;
         private int index;
+        private int currIndex;
         private int size;
         private int module_size;
 
         public LinkedArrayIterator(LinkedArray<E> currModule) {
-            this.currModule = currModule;
-            this.index = 0;
+            this.currModule = currModule.front;
+            this.index = this.currIndex = 0;
             this.size = currModule.size();
             this.module_size = currModule.module_size;
 
@@ -72,11 +91,13 @@ public class LinkedArray<E> implements List<E> {
 
         @Override
         public E next() {
-            if (index >= module_size) {
-                currModule = currModule.nextArray;
+            if (currIndex >= module_size) {
+                currModule = currModule.next;
+                currIndex = 0;
             }
             if (currModule == null) return (E) null;
-            return (E) currModule.data[index++ % module_size];
+            index++;
+            return (E) currModule.data[currIndex++];
         }
     }
 
@@ -87,12 +108,18 @@ public class LinkedArray<E> implements List<E> {
 
     @Override
     public Object[] toArray() {
-        return new Object[0];
+        Object[] data = new Object[this.size()];
+        int index = 0;
+        for (Object o : this) {
+            data[index++] = o;
+        }
+        return data;
     }
 
     @Override
     public <T> T[] toArray(T[] a) {
-        return null;
+        return (T[]) this.toArray();
+
     }
 
     @Override
@@ -104,12 +131,20 @@ public class LinkedArray<E> implements List<E> {
     @Override
     public boolean add(E e) {
         try {
-            LinkedArray<E> curr = this;
+            ArrayLink<E> curr = this.front;
             for (int module = 0; module < num_modules; module++) {
-                curr = curr.nextArray;
+                curr = curr.next;
             }
-            curr.data[modulo + 1] = e;
-            modulo++;
+            if (modulo < module_size) {
+                curr.data[modulo + 1] = e;
+                modulo++;
+            } else {
+                curr.next = new ArrayLink<>(module_size);
+                curr = curr.next;
+                curr.data[0] = e;
+                modulo = 0;
+            }
+
         } catch (Exception ex) {
             return false;
         }
